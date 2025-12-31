@@ -1,18 +1,9 @@
 import json
 from src.llm_client import call_llm
 
-def detect_intent(profile, user_query):
+def detect_intent(profile, user_query, provider="gemini", model="gemini-2.5-flash-lite"):
     """
     Analyzes the user query and dataset profile to determine intent.
-    
-    Returns:
-        dict: {
-            "is_related": bool, 
-            "is_visualization": bool, 
-            "needs_clarification": bool, 
-            "clarification_message": str,
-            "rationale": str
-        }
     """
     
     system_prompt = f"""
@@ -42,23 +33,24 @@ Output strictly valid JSON in the following format:
 }}
 """
     try:
-        response_text = call_llm(system_prompt)
+        # We generally use the selected model for consistency, 
+        # but if we wanted speed we could force a lighter model here.
+        # For now, respect user choice.
+        response_text = call_llm(system_prompt, provider=provider, model=model)
         # Clean up code blocks if the LLM wraps JSON in markdown
         cleaned_text = response_text.strip().replace("```json", "").replace("```", "")
         return json.loads(cleaned_text)
     except Exception as e:
         # Fallback in case of parsing error
         return {
-            "is_related": True, # Assume related to be safe/permissive if parsing fails? Or fail safe?
+            "is_related": True, 
             "is_visualization": True,
             "needs_clarification": False,
             "rationale": f"Parsing failed: {str(e)}" 
         }
 
 def generate_code_prompt(profile, user_query):
-    """
-    Constructs the prompt for code generation.
-    """
+    # (Same as before)
     return f"""
 You are a Python Data Visualization Expert.
 You have access to a pandas DataFrame named `df`.
@@ -88,26 +80,14 @@ Code Format:
 ```
 """
 
-def generate_visualization(profile, user_query, intent_data=None):
+def generate_visualization(profile, user_query, intent_data=None, provider="gemini", model="gemini-2.5-flash-lite"):
     """
     Orchestrates the brain logic: Intent -> Code Gen.
-    
-    Args:
-        profile (dict): Dataset metadata.
-        user_query (str): The user's input.
-        intent_data (dict, optional): Pre-computed intent if available.
-        
-    Returns:
-        dict: {
-            "status": "success" | "skipped" | "error",
-            "code": str (if success),
-            "message": str (reason for skip/error)
-        }
     """
     
-    # 1. Detect Intent (if not provided)
+    # 1. Detect Intent
     if not intent_data:
-        intent_data = detect_intent(profile, user_query)
+        intent_data = detect_intent(profile, user_query, provider=provider, model=model)
         
     if not intent_data.get("is_related", False):
         return {
@@ -125,11 +105,11 @@ User Question: "{user_query}"
 Answer the user's question based on the metadata. Keep it concise.
 """
         try:
-            answer = call_llm(qa_prompt)
+            answer = call_llm(qa_prompt, provider=provider, model=model)
             return {
                 "status": "success",
                 "message": answer,
-                "type": "text_response" # Signal to main.py that no code execution is needed
+                "type": "text_response" 
             }
         except Exception as e:
              return {
@@ -146,7 +126,7 @@ Answer the user's question based on the metadata. Keep it concise.
     # 2. Generate Code (Only if visualization is needed)
     prompt = generate_code_prompt(profile, user_query)
     try:
-        raw_response = call_llm(prompt)
+        raw_response = call_llm(prompt, provider=provider, model=model)
         # Extract code from markdown blocks
         code = raw_response
         if "```python" in code:

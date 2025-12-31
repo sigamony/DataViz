@@ -230,6 +230,15 @@
             📊 DataViz AI
         </div>
 
+        <div style="margin-bottom: 1rem;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">AI Model</label>
+            <select id="modelSelect"
+                style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); background: white; margin-top: 0.25rem;">
+                <option value="gemini:gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Google)</option>
+                <option value="huggingface:meta-llama/Llama-3.1-8B-Instruct">Llama 3.1 8B Instruct (HF)</option>
+            </select>
+        </div>
+
         <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
             <div style="font-size: 2rem;">📁</div>
             <p><strong>New Upload</strong></p>
@@ -334,7 +343,7 @@
 
                 // Remove loading message and show success
                 const chat = document.getElementById('chatContainer');
-                if (chat.lastElementChild.textContent.includes("Uploading")) {
+                if (chat.lastElementChild && chat.lastElementChild.textContent.includes("Uploading")) {
                     chat.lastElementChild.remove();
                 }
 
@@ -397,13 +406,18 @@
             // Bot Loading
             const loadingMsgId = addBotMessage("Thinking<span class='loading-dots'></span>");
 
+            // Get Model
+            const [provider, model] = document.getElementById('modelSelect').value.split(':');
+
             try {
                 const res = await fetch(`${API_URL}/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         file_id: currentFileId,
-                        query: text
+                        query: text,
+                        provider: provider,
+                        model: model
                     })
                 });
 

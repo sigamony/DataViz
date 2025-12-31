@@ -39,6 +39,8 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 class QueryRequest(BaseModel):
     file_id: str
     query: str
+    provider: str = "gemini"
+    model: str = "gemini-2.5-flash-lite"
 
 from fastapi.responses import FileResponse
 
@@ -59,12 +61,18 @@ async def upload_file(file: UploadFile = File(...)):
         with open(save_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
+        logger.info(f"File saved to {save_path}. Loading data...")
+        
         # Load and profile immediately to validate
         df = load_data(save_path)
+        logger.info(f"Data loaded. Shape: {df.shape}. Generating profile...")
+        
         profile = generate_profile(df)
+        logger.info("Profile generated. Saving to DB...")
         
         # Save metadata to SQLite
         save_file_metadata(file_id, file.filename, save_path, profile)
+        logger.info("Metadata saved to DB.")
         
         return {
             "file_id": file_id,
@@ -97,8 +105,13 @@ async def generate_chart(request: QueryRequest):
         
         # 1. Brain: Generate Code
         # We pass the profile and query to the LLM
-        logger.info(f"Processing query: {request.query}")
-        brain_result = generate_visualization(profile, request.query)
+        logger.info(f"Processing query using {request.provider}/{request.model}: {request.query}")
+        brain_result = generate_visualization(
+            profile, 
+            request.query, 
+            provider=request.provider, 
+            model=request.model
+        )
         
         if brain_result["status"] != "success":
             return {
