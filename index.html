@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,7 +54,8 @@
             transition: all 0.2s;
         }
 
-        .upload-area:hover, .upload-area.dragover {
+        .upload-area:hover,
+        .upload-area.dragover {
             border-color: var(--primary);
             background: #eff6ff;
         }
@@ -99,7 +101,7 @@
             border-radius: 16px;
             max-width: 80%;
             line-height: 1.5;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         .user .bubble {
@@ -113,7 +115,7 @@
             border: 1px solid var(--border);
             border-bottom-left-radius: 4px;
         }
-        
+
         .chart-container {
             margin-top: 1rem;
             background: white;
@@ -122,7 +124,7 @@
             border: 1px solid var(--border);
             display: inline-block;
         }
-        
+
         .chart-container img {
             max-width: 100%;
             height: auto;
@@ -144,14 +146,14 @@
             border-radius: 99px;
             font-size: 1rem;
             outline: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             transition: border-color 0.2s;
         }
 
         .input-box:focus {
             border-color: var(--primary);
         }
-        
+
         .input-box:disabled {
             background: #f1f5f9;
             cursor: not-allowed;
@@ -179,46 +181,47 @@
             background: var(--primary-hover);
         }
 
-        .file-info {
-            display: none; /* Hidden until file uploaded */
-            background: white;
-            padding: 1rem;
-            border-radius: 8px;
+        /* File List Styles */
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            padding: 0.75rem;
+            background: var(--bg);
             border: 1px solid var(--border);
-            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .loading-dots:after {
-            content: '.';
-            animation: dots 1.5s steps(5, end) infinite;
+        .file-item:hover {
+            border-color: var(--primary);
         }
 
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60% { content: '...'; }
-            80%, 100% { content: ''; }
+        .file-item.active {
+            background: #eff6ff;
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 500;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Profile Info */
-        .profile-stats {
-            margin-top: 0.5rem;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-        }
-        .profile-bg {
-            background: #f1f5f9;
-            padding: 0.5rem;
-            border-radius: 4px;
-            margin-top: 0.5rem;
+        .file-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
         }
     </style>
 </head>
+
 <body>
 
     <!-- Sidebar -->
@@ -226,21 +229,30 @@
         <div class="brand">
             📊 DataViz AI
         </div>
-        
+
         <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
             <div style="font-size: 2rem;">📁</div>
-            <p><strong>Click to Upload</strong><br>or drag and drop CSV/Excel</p>
+            <p><strong>New Upload</strong></p>
             <input type="file" id="fileInput" hidden accept=".csv,.xlsx,.xls">
         </div>
 
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+            <div
+                style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                Your Files</div>
+            <div id="fileList" class="file-list">
+                <!-- File items added here -->
+            </div>
+        </div>
+
         <div id="fileInfo" class="file-info">
-            <strong>Active File:</strong>
-            <div id="fileName" style="margin-bottom: 0.5rem; color: var(--primary);"></div>
+            <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 0.5rem;">ACTIVE FILE METADATA</div>
+            <div id="fileName" style="margin-bottom: 0.5rem; color: var(--primary); font-weight: 600;"></div>
             <div class="profile-bg">
                 <div>Rows: <span id="rowCount">-</span></div>
                 <div>Cols: <span id="colCount">-</span></div>
             </div>
-            <div style="margin-top: 1rem; font-size: 0.8rem; color: #888;">
+            <div style="margin-top: 1rem; font-size: 0.8rem; color: #888; max-height: 100px; overflow-y: auto;">
                 Columns: <span id="colList"></span>
             </div>
         </div>
@@ -252,13 +264,14 @@
             <!-- Messages go here -->
             <div class="message bot">
                 <div class="bubble">
-                    Hello! To get started, please upload a dataset (CSV or Excel) on the left.
+                    Hello! Upload a dataset to the left to get started. 🚀
                 </div>
             </div>
         </div>
 
         <div class="input-area">
-            <input type="text" id="userInput" class="input-box" placeholder="Ask a question about your data..." disabled>
+            <input type="text" id="userInput" class="input-box" placeholder="Ask a question about your data..."
+                disabled>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
         </div>
     </div>
@@ -266,14 +279,14 @@
     <script>
         const API_URL = "http://127.0.0.1:8000";
         let currentFileId = null;
+        let fileCache = {}; // Stores metadata for loaded files
 
         // --- File Upload Logic ---
         const fileInput = document.getElementById('fileInput');
         const dropZone = document.getElementById('dropZone');
 
         fileInput.addEventListener('change', handleFileSelect);
-        
-        // Drag and Drop
+
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('dragover');
@@ -298,37 +311,69 @@
             formData.append('file', file);
 
             // Show loading state
-            addBotMessage("Uploading and profiling your data...");
+            addBotMessage(`Uploading '${file.name}'...`);
 
             try {
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 if (!res.ok) throw new Error("Upload failed");
-                
+
                 const data = await res.json();
-                currentFileId = data.file_id;
-                
-                // Update UI
-                document.getElementById('fileInfo').style.display = 'block';
-                document.getElementById('fileName').textContent = data.filename;
-                document.getElementById('rowCount').textContent = data.profile.row_count;
-                document.getElementById('colCount').textContent = data.profile.columns.length;
-                document.getElementById('colList').textContent = data.profile.columns.join(", ");
-                
-                document.getElementById('userInput').disabled = false;
-                document.getElementById('userInput').focus();
-                
+
+                // Store in cache
+                fileCache[data.file_id] = data;
+
+                // Add to list UI
+                addFileToList(data.file_id, data.filename);
+
+                // Switch to this new file
+                switchFile(data.file_id);
+
                 // Remove loading message and show success
                 const chat = document.getElementById('chatContainer');
-                chat.lastElementChild.remove(); // Remove "Uploading..."
-                addBotMessage(`Analysis complete! I found ${data.profile.row_count} rows and columns like: ${data.profile.columns.slice(0,3).join(', ')}... \nWhat would you like to visualize?`);
+                if (chat.lastElementChild.textContent.includes("Uploading")) {
+                    chat.lastElementChild.remove();
+                }
+
+                addBotMessage(`Ready! Metadata loaded for <b>${data.filename}</b>. (${data.profile.row_count} rows)`);
 
             } catch (err) {
                 addBotMessage("❌ Error uploading file: " + err.message);
             }
+        }
+
+        function addFileToList(id, name) {
+            const fileList = document.getElementById('fileList');
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.id = `file-${id}`;
+            div.onclick = () => switchFile(id);
+            div.innerHTML = `<div class="file-name" title="${name}">${name}</div>`;
+            fileList.appendChild(div);
+        }
+
+        function switchFile(id) {
+            currentFileId = id;
+            const data = fileCache[id];
+
+            // Update Active State in List
+            document.querySelectorAll('.file-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`file-${id}`).classList.add('active');
+
+            // Update Sidebar Info
+            document.getElementById('fileInfo').style.display = 'block';
+            document.getElementById('fileName').textContent = data.filename;
+            document.getElementById('rowCount').textContent = data.profile.row_count;
+            document.getElementById('colCount').textContent = data.profile.columns.length;
+            document.getElementById('colList').textContent = data.profile.columns.join(", ");
+
+            // Enable Chat
+            document.getElementById('userInput').disabled = false;
+            document.getElementById('userInput').placeholder = `Ask about ${data.filename}...`;
+            document.getElementById('userInput').focus();
         }
 
         // --- Chat Logic ---
@@ -341,14 +386,14 @@
             const text = userInput.value.trim();
             if (!text) return;
             if (!currentFileId) {
-                alert("Please upload a file first.");
+                alert("Please select a file on the left.");
                 return;
             }
 
             // User Message
             addUserMessage(text);
             userInput.value = '';
-            
+
             // Bot Loading
             const loadingMsgId = addBotMessage("Thinking<span class='loading-dots'></span>");
 
@@ -363,28 +408,26 @@
                 });
 
                 const data = await res.json();
-                
+
                 // Remove loading message
                 document.getElementById(loadingMsgId).remove();
 
                 if (data.success) {
-                    // Show Image
-                    const imgHtml = `<div class="chart-container"><img src="data:image/png;base64,${data.image}" alt="Chart"></div>`;
-                    addBotMessage(data.message + imgHtml);
-                } else if (data.status === 'skipped' || data.type === 'text_response') {
-                    // Just text response (clarification or chat)
+                    if (data.type === 'image_response' || data.type === 'chart_response') {
+                        const imgHtml = `<div class="chart-container"><img src="data:image/png;base64,${data.image}" alt="Chart"></div>`;
+                        addBotMessage(data.message + imgHtml);
+                    } else {
+                        addBotMessage(data.message);
+                    }
+                } else if (data.status === 'skipped') {
                     addBotMessage(data.message);
                 } else {
                     // Error
                     addBotMessage(`⚠️ ${data.message || data.error}`);
-                    if (data.code) {
-                         // Optional: Show code debug if failed
-                         console.log("Failed Code:", data.code);
-                    }
                 }
 
             } catch (err) {
-                document.getElementById(loadingMsgId).remove();
+                document.getElementById(loadingMsgId)?.remove();
                 addBotMessage("❌ Connection error: " + err.message);
             }
         }
@@ -418,4 +461,5 @@
         }
     </script>
 </body>
+
 </html>
