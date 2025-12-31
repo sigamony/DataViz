@@ -306,12 +306,15 @@
             dropZone.classList.remove('dragover');
             if (e.dataTransfer.files.length) {
                 uploadFile(e.dataTransfer.files[0]);
+                fileInput.value = '';
             }
         });
 
         function handleFileSelect(e) {
             if (e.target.files.length) {
                 uploadFile(e.target.files[0]);
+                // Reset input so the same file can be selected again if needed
+                e.target.value = '';
             }
         }
 
@@ -322,15 +325,22 @@
             // Show loading state
             addBotMessage(`Uploading '${file.name}'...`);
 
+            console.log("Starting upload for:", file.name);
             try {
                 const res = await fetch(`${API_URL}/upload`, {
                     method: 'POST',
                     body: formData
                 });
 
-                if (!res.ok) throw new Error("Upload failed");
+                console.log("Upload status:", res.status);
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Upload failed (${res.status}): ${errorText}`);
+                }
 
                 const data = await res.json();
+                console.log("Upload successful:", data);
 
                 // Store in cache
                 fileCache[data.file_id] = data;
@@ -350,6 +360,7 @@
                 addBotMessage(`Ready! Metadata loaded for <b>${data.filename}</b>. (${data.profile.row_count} rows)`);
 
             } catch (err) {
+                console.error("Upload Error:", err);
                 addBotMessage("❌ Error uploading file: " + err.message);
             }
         }
