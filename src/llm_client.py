@@ -7,7 +7,7 @@ load_dotenv()
 
 # Configure API keys
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-HF_TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_API_KEY")
+HF_TOKEN = os.environ.get("HF_TOKEN")
 
 def get_gemini_client():
     if not GEMINI_API_KEY:

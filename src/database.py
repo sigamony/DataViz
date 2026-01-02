@@ -1,56 +1,66 @@
-import sqlite3
-import json
-import os
 
-DB_PATH = "chart_visualizer.db"
+import os
+import pymongo
+from pymongo import MongoClient
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Global client to be reused
+_mongo_client = None
+_db = None
+
+def get_db_client():
+    global _mongo_client
+    if _mongo_client is None:
+        mongo_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017/chart_visualizer")
+        try:
+            _mongo_client = MongoClient(mongo_uri)
+            # Send a ping to confirm a successful connection
+            _mongo_client.admin.command('ping')
+            logger.info("Successfully connected to MongoDB!")
+        except Exception as e:
+            logger.error(f"Failed to connect to MongoDB: {e}")
+            raise e
+    return _mongo_client
+
+def get_db():
+    global _db
+    if _db is None:
+        client = get_db_client()
+        # Parse database name from URI or default to 'chart_visualizer'
+        # Default pymongo behavior uses the db in URI if present
+        _db = client.get_database() 
+    return _db
 
 def init_db():
-    """Initialize the database with the required table."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS files (
-            id TEXT PRIMARY KEY,
-            filename TEXT,
-            filepath TEXT,
-            profile TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    """Initialize the database (create indexes if needed)."""
+    db = get_db()
+    # Create indexes for files
+    db.files.create_index("id", unique=True)
+    logger.info("MongoDB initialized and indexes verified.")
 
 def save_file_metadata(file_id, filename, filepath, profile):
     """Save file metadata to the database."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    # Serialize profile dict to JSON string
-    profile_json = json.dumps(profile, default=str)
-    
-    cursor.execute('''
-        INSERT INTO files (id, filename, filepath, profile)
-        VALUES (?, ?, ?, ?)
-    ''', (file_id, filename, filepath, profile_json))
-    
-    conn.commit()
-    conn.close()
+    db = get_db()
+    db.files.insert_one({
+        "id": file_id,
+        "filename": filename,
+        "filepath": filepath,
+        "profile": profile,
+        "created_at": datetime.utcnow()
+    })
 
 def get_file_metadata(file_id):
     """Retrieve file metadata from the database."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT filepath, profile, filename FROM files WHERE id = ?', (file_id,))
-    row = cursor.fetchone()
-    conn.close()
-    
-    if row:
-        filepath, profile_json, filename = row
-        # Deserialize JSON string back to dict
-        profile = json.loads(profile_json)
+    db = get_db()
+    doc = db.files.find_one({"id": file_id})
+    if doc:
         return {
-            "path": filepath,
-            "profile": profile,
-            "filename": filename
+            "path": doc["filepath"],
+            "profile": doc["profile"],
+            "filename": doc["filename"]
         }
     return None
+
+from datetime import datetime
