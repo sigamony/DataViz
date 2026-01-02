@@ -5,9 +5,10 @@ venv/
 
 data/
 
-__pycache__/
+__pycache__
 
 
 
 test*.py
 *.log
+

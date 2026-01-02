@@ -1,10 +1,35 @@
 import json
 from src.llm_client import call_llm
+from typing import List, Dict, Optional
 
-def detect_intent(profile, user_query, provider="gemini", model="gemini-2.5-flash-lite"):
+def format_conversation_context(messages: List[Dict]) -> str:
+    """
+    Format conversation history for LLM context.
+    
+    Args:
+        messages: List of message dictionaries with role and content
+        
+    Returns:
+        Formatted string of conversation history
+    """
+    if not messages:
+        return ""
+    
+    context = "\n\nPrevious Conversation:\n"
+    for msg in messages:
+        role = "User" if msg['role'] == 'user' else "Assistant"
+        context += f"{role}: {msg['content']}\n"
+    
+    return context
+
+def detect_intent(profile, user_query, conversation_history: Optional[List[Dict]] = None, provider="gemini", model="gemini-2.5-flash-lite"):
     """
     Analyzes the user query and dataset profile to determine intent.
+    Now includes conversation history for context.
     """
+    
+    # Add conversation context if available
+    context = format_conversation_context(conversation_history) if conversation_history else ""
     
     system_prompt = f"""
 You are a smart data analyst assistant. 
@@ -12,6 +37,7 @@ Your job is to analyze a User Query in the context of a Dataset Profile and dete
 
 Dataset Profile:
 {json.dumps(profile, default=str)}
+{context}
 
 User Query:
 "{user_query}"
@@ -22,6 +48,7 @@ Determine if the user wants to visualize data from this dataset.
 2. **Is Visualization**: Does the user imply seeing a chart, plot, diagram, or trend?
 3. **Needs Clarification**: Is the query too vague to produce ANY meaningful chart (e.g. "Show me data" without saying what)? 
    - Note: If the query is "Show me trends" and there are date/numeric columns, you should try your best (Needs Clarification = False). Only return True if it is impossible to infer a reasonable default.
+   - Consider previous conversation context when determining if clarification is needed.
 
 Output strictly valid JSON in the following format:
 {{
@@ -49,20 +76,24 @@ Output strictly valid JSON in the following format:
             "rationale": f"Parsing failed: {str(e)}" 
         }
 
-def generate_code_prompt(profile, user_query):
-    # (Same as before)
+def generate_code_prompt(profile, user_query, conversation_history: Optional[List[Dict]] = None):
+    """Generate code prompt with conversation context."""
+    context = format_conversation_context(conversation_history) if conversation_history else ""
+    
     return f"""
 You are a Python Data Visualization Expert.
 You have access to a pandas DataFrame named `df`.
 
 Dataset Metadata:
 {json.dumps(profile, default=str)}
+{context}
 
 User Request:
 "{user_query}"
 
 Goal:
 Write Python code to create the most appropriate visualization for the user's request.
+Consider the conversation history to understand context and references (e.g., "make it horizontal" refers to previous chart).
 
 Rules:
 1. **Use ONLY pandas and matplotlib.pyplot**.
@@ -80,14 +111,15 @@ Code Format:
 ```
 """
 
-def generate_visualization(profile, user_query, intent_data=None, provider="gemini", model="gemini-2.5-flash-lite"):
+def generate_visualization(profile, user_query, conversation_history: Optional[List[Dict]] = None, intent_data=None, provider="gemini", model="gemini-2.5-flash-lite"):
     """
     Orchestrates the brain logic: Intent -> Code Gen.
+    Now supports conversation history for context-aware responses.
     """
     
     # 1. Detect Intent
     if not intent_data:
-        intent_data = detect_intent(profile, user_query, provider=provider, model=model)
+        intent_data = detect_intent(profile, user_query, conversation_history, provider=provider, model=model)
         
     if not intent_data.get("is_related", False):
         return {
@@ -97,12 +129,14 @@ def generate_visualization(profile, user_query, intent_data=None, provider="gemi
     
     # Check if visualization is requested
     if not intent_data.get("is_visualization", False):
-        # Handle general Q&A about data
+        # Handle general Q&A about data with conversation context
+        context = format_conversation_context(conversation_history) if conversation_history else ""
         qa_prompt = f"""
 You are a Data Analyst.
 Dataset Profile: {json.dumps(profile, default=str)}
+{context}
 User Question: "{user_query}"
-Answer the user's question based on the metadata. Keep it concise.
+Answer the user's question based on the metadata and conversation history. Keep it concise.
 """
         try:
             answer = call_llm(qa_prompt, provider=provider, model=model)
@@ -124,7 +158,7 @@ Answer the user's question based on the metadata. Keep it concise.
         }
 
     # 2. Generate Code (Only if visualization is needed)
-    prompt = generate_code_prompt(profile, user_query)
+    prompt = generate_code_prompt(profile, user_query, conversation_history)
     try:
         raw_response = call_llm(prompt, provider=provider, model=model)
         # Extract code from markdown blocks

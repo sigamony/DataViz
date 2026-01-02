@@ -5,65 +5,103 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Data Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
+            --primary: #818CF8;
+            --primary-hover: #6366F1;
+            --primary-light: #312E81;
+            --accent: #A78BFA;
+            --bg: #0F172A;
+            --card-bg: #1E293B;
+            --text-main: #F1F5F9;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --border: #334155;
+            --success: #34D399;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background-color: var(--bg);
             color: var(--text-main);
             margin: 0;
             display: flex;
             height: 100vh;
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Sidebar for Upload */
+        /* Sidebar */
         .sidebar {
-            width: 320px;
+            width: 300px;
             background: var(--card-bg);
             border-right: 1px solid var(--border);
-            padding: 2rem;
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            gap: 2rem;
+            gap: 24px;
+            overflow-y: auto;
         }
 
         .brand {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 600;
             color: var(--text-main);
+            letter-spacing: -0.02em;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand::before {
+            content: '📊';
+            font-size: 24px;
         }
 
         .upload-area {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 2rem;
+            border: 1.5px dashed var(--border);
+            border-radius: 10px;
+            padding: 24px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            background: var(--bg);
         }
 
-        .upload-area:hover,
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
         .upload-area.dragover {
             border-color: var(--primary);
-            background: #eff6ff;
+            background: var(--primary-light);
+            border-style: solid;
         }
 
         .upload-area p {
-            margin: 0.5rem 0 0;
-            font-size: 0.9rem;
+            margin: 8px 0 0;
+            font-size: 13px;
             color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 4px;
         }
 
         /* Main Content */
@@ -71,25 +109,32 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 2rem;
-            gap: 2rem;
+            padding: 32px;
+            gap: 24px;
             overflow-y: auto;
+            background: var(--bg);
         }
 
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            max-width: 900px;
+            gap: 16px;
+            max-width: 800px;
             margin: 0 auto;
             width: 100%;
+            padding-bottom: 20px;
         }
 
         .message {
             display: flex;
-            gap: 1rem;
-            animation: fadeIn 0.3s ease;
+            gap: 12px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .message.user {
@@ -97,43 +142,48 @@
         }
 
         .bubble {
-            padding: 1rem 1.5rem;
-            border-radius: 16px;
-            max-width: 80%;
-            line-height: 1.5;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 75%;
+            line-height: 1.6;
+            font-size: 14px;
         }
 
         .user .bubble {
             background: var(--primary);
             color: white;
-            border-bottom-right-radius: 4px;
+            border-bottom-right-radius: 3px;
+            box-shadow: var(--shadow-sm);
         }
 
         .bot .bubble {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-bottom-left-radius: 4px;
+            border-bottom-left-radius: 3px;
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-sm);
         }
 
         .chart-container {
-            margin-top: 1rem;
-            background: white;
-            border-radius: 8px;
-            padding: 1rem;
+            margin-top: 12px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 16px;
             border: 1px solid var(--border);
             display: inline-block;
+            box-shadow: var(--shadow-sm);
         }
 
         .chart-container img {
             max-width: 100%;
             height: auto;
-            border-radius: 4px;
+            border-radius: 6px;
+            display: block;
         }
 
         /* Input Area */
         .input-area {
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
             width: 100%;
             position: relative;
@@ -141,73 +191,95 @@
 
         .input-box {
             width: 100%;
-            padding: 1rem 3.5rem 1rem 1.5rem;
+            padding: 14px 56px 14px 20px;
             border: 1px solid var(--border);
-            border-radius: 99px;
-            font-size: 1rem;
+            border-radius: 24px;
+            font-size: 14px;
+            font-family: inherit;
             outline: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            transition: border-color 0.2s;
+            background: var(--card-bg);
+            box-shadow: var(--shadow-md);
+            transition: all 0.2s ease;
         }
 
         .input-box:focus {
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light), var(--shadow-md);
         }
 
         .input-box:disabled {
-            background: #f1f5f9;
+            background: var(--bg);
             cursor: not-allowed;
+            color: var(--text-muted);
         }
 
         .send-btn {
             position: absolute;
-            right: 8px;
+            right: 6px;
             top: 50%;
             transform: translateY(-50%);
             background: var(--primary);
             color: white;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            font-size: 16px;
         }
 
-        .send-btn:hover {
+        .send-btn:hover:not(:disabled) {
             background: var(--primary-hover);
+            transform: translateY(-50%) scale(1.05);
         }
 
-        /* File List Styles */
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* File List */
         .file-list {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            max-height: 300px;
+            gap: 6px;
+            max-height: 280px;
             overflow-y: auto;
         }
 
+        .file-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
         .file-item {
-            padding: 0.75rem;
+            padding: 10px 12px;
             background: var(--bg);
-            border: 1px solid var(--border);
+            border: 1px solid transparent;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s ease;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            font-size: 13px;
         }
 
         .file-item:hover {
+            background: var(--primary-light);
             border-color: var(--primary);
         }
 
         .file-item.active {
-            background: #eff6ff;
+            background: var(--primary-light);
             border-color: var(--primary);
             color: var(--primary);
             font-weight: 500;
@@ -217,7 +289,295 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 180px;
+            max-width: 220px;
+        }
+
+        /* Section Labels */
+        .section-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
+
+        /* Model Select */
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        select:hover {
+            border-color: var(--primary);
+        }
+
+        select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* File Info */
+        .file-info {
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .profile-bg {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+            color: var(--text-secondary);
+        }
+
+        .profile-bg span {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Demo Mode Styles */
+        .demo-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(129, 140, 248, 0.3);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--bg);
+            color: var(--text-main);
+        }
+
+        .demo-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .demo-card:hover {
+            border-color: var(--primary);
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(129, 140, 248, 0.2);
+        }
+
+        .demo-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .demo-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .demo-card-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .demo-card-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .demo-card-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .demo-card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .demo-use-cases {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .demo-use-cases-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .demo-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .demo-tag {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* User Profile Styles */
+        .user-profile {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--card-bg);
+            padding: 8px 16px 8px 8px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            z-index: 100;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 2px solid var(--border);
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .context-indicator {
+            position: absolute;
+            bottom: 80px;
+            right: 24px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .context-indicator.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
         }
     </style>
 </head>
@@ -226,69 +586,266 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="brand">
-            📊 DataViz AI
-        </div>
+        <div class="brand">DataViz</div>
 
-        <div style="margin-bottom: 1rem;">
-            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">AI Model</label>
-            <select id="modelSelect"
-                style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); background: white; margin-top: 0.25rem;">
-                <option value="gemini:gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (Google)</option>
-                <option value="huggingface:meta-llama/Llama-3.1-8B-Instruct">Llama 3.1 8B Instruct (HF)</option>
+        <button class="demo-btn" onclick="openDemoModal()">✨ Try Demo Datasets</button>
+
+        <div>
+            <div class="section-label">AI Model</div>
+            <select id="modelSelect">
+                <option value="gemini:gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                <option value="huggingface:meta-llama/Llama-3.1-8B-Instruct">Llama 3.1 8B</option>
             </select>
         </div>
 
         <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
-            <div style="font-size: 2rem;">📁</div>
-            <p><strong>New Upload</strong></p>
+            <div class="upload-icon">📁</div>
+            <p><strong>Upload Dataset</strong></p>
+            <p style="font-size: 12px; margin-top: 4px;">CSV, XLSX, XLS</p>
             <input type="file" id="fileInput" hidden accept=".csv,.xlsx,.xls">
         </div>
 
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
-            <div
-                style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
-                Your Files</div>
+        <div style="flex: 1; display: flex; flex-direction: column;">
+            <div class="section-label">Your Files</div>
             <div id="fileList" class="file-list">
                 <!-- File items added here -->
             </div>
         </div>
 
-        <div id="fileInfo" class="file-info">
-            <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 0.5rem;">ACTIVE FILE METADATA</div>
-            <div id="fileName" style="margin-bottom: 0.5rem; color: var(--primary); font-weight: 600;"></div>
+        <div id="fileInfo" class="file-info" style="display: none;">
+            <div class="section-label" style="margin-bottom: 8px;">Active File</div>
+            <div id="fileName" style="margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;"></div>
             <div class="profile-bg">
                 <div>Rows: <span id="rowCount">-</span></div>
                 <div>Cols: <span id="colCount">-</span></div>
             </div>
-            <div style="margin-top: 1rem; font-size: 0.8rem; color: #888; max-height: 100px; overflow-y: auto;">
-                Columns: <span id="colList"></span>
+            <div style="margin-top: 12px; font-size: 12px; color: var(--text-muted); max-height: 80px; overflow-y: auto;">
+                <strong>Columns:</strong> <span id="colList"></span>
             </div>
         </div>
     </div>
 
     <!-- Main Chat -->
     <div class="main">
+        <!-- User Profile -->
+        <div class="user-profile" id="userProfile" style="display: none;">
+            <div class="user-avatar" id="userAvatar"></div>
+            <div class="user-name" id="userName"></div>
+        </div>
+
+        <!-- Context Indicator -->
+        <div class="context-indicator" id="contextIndicator">
+            💬 <span id="contextCount">0</span>/10 messages in context
+        </div>
+
         <div class="chat-container" id="chatContainer">
             <!-- Messages go here -->
             <div class="message bot">
                 <div class="bubble">
-                    Hello! Upload a dataset to the left to get started. 🚀
+                    👋 Welcome! Upload a dataset to begin analyzing your data.
                 </div>
             </div>
         </div>
 
         <div class="input-area">
-            <input type="text" id="userInput" class="input-box" placeholder="Ask a question about your data..."
+            <input type="text" id="userInput" class="input-box" placeholder="Ask about your data..."
                 disabled>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <!-- Demo Modal -->
+    <div id="demoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🎯 Select Demo Dataset</div>
+                <button class="modal-close" onclick="closeDemoModal()">×</button>
+            </div>
+            <div id="demoDatasetList">
+                <!-- Demo datasets will be loaded here -->
+            </div>
         </div>
     </div>
 
     <script>
         const API_URL = "http://127.0.0.1:8000";
         let currentFileId = null;
-        let fileCache = {}; // Stores metadata for loaded files
+        let fileCache = {};
+        let demoDatasets = [];
+        let sessionId = null;
+        let userProfile = null;
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initializeSession();
+            await loadDemoDatasets();
+        });
+
+        // --- Session Management ---
+        async function initializeSession() {
+            // Check if session exists in localStorage
+            const storedSessionId = localStorage.getItem('dataviz_session_id');
+            
+            if (storedSessionId) {
+                // Try to retrieve existing session
+                try {
+                    const res = await fetch(`${API_URL}/api/session/${storedSessionId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        sessionId = storedSessionId;
+                        userProfile = data.session.user_profile;
+                        displayUserProfile(userProfile, data.avatar_style);
+                        console.log('Session restored:', sessionId);
+                        return;
+                    }
+                } catch (err) {
+                    console.log('Failed to restore session:', err);
+                }
+            }
+            
+            // Create new session
+            try {
+                const res = await fetch(`${API_URL}/api/session/create`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    sessionId = data.session_id;
+                    userProfile = data.user_profile;
+                    localStorage.setItem('dataviz_session_id', sessionId);
+                    displayUserProfile(userProfile, data.avatar_style);
+                    console.log('New session created:', sessionId, userProfile.username);
+                }
+            } catch (err) {
+                console.error('Failed to create session:', err);
+            }
+        }
+
+        function displayUserProfile(profile, avatarStyle) {
+            const profileEl = document.getElementById('userProfile');
+            const avatarEl = document.getElementById('userAvatar');
+            const nameEl = document.getElementById('userName');
+            
+            avatarEl.style.background = avatarStyle;
+            avatarEl.textContent = profile.avatar.emoji;
+            nameEl.textContent = profile.username;
+            
+            profileEl.style.display = 'flex';
+        }
+
+        function updateContextIndicator(count) {
+            const indicator = document.getElementById('contextIndicator');
+            const countEl = document.getElementById('contextCount');
+            
+            if (count > 0) {
+                countEl.textContent = count;
+                indicator.classList.add('show');
+                setTimeout(() => indicator.classList.remove('show'), 3000);
+            }
+        }
+
+        // --- Demo Mode Functions ---
+        async function loadDemoDatasets() {
+            try {
+                const res = await fetch(`${API_URL}/api/demo-datasets`);
+                const data = await res.json();
+                if (data.success) {
+                    demoDatasets = data.datasets;
+                    console.log('Demo datasets loaded:', demoDatasets.length);
+                }
+            } catch (err) {
+                console.error('Failed to load demo datasets:', err);
+            }
+        }
+
+        function openDemoModal() {
+            const modal = document.getElementById('demoModal');
+            const listContainer = document.getElementById('demoDatasetList');
+            
+            // Render demo datasets
+            listContainer.innerHTML = demoDatasets.map(dataset => `
+                <div class="demo-card" onclick="loadDemoDataset('${dataset.id}')">
+                    <div class="demo-card-header">
+                        <div>
+                            <div class="demo-card-title">${dataset.name}</div>
+                        </div>
+                        <div class="demo-card-badge">${dataset.category}</div>
+                    </div>
+                    <div class="demo-card-desc">${dataset.description}</div>
+                    <div class="demo-card-meta">
+                        <span>📄 ${dataset.rows} rows</span>
+                        <span>📊 ${dataset.columns.length} columns</span>
+                    </div>
+                    <div class="demo-use-cases">
+                        <div class="demo-use-cases-label">Use Cases</div>
+                        <div class="demo-tags">
+                            ${dataset.use_cases.map(uc => `<span class="demo-tag">${uc}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            modal.classList.add('active');
+        }
+
+        function closeDemoModal() {
+            document.getElementById('demoModal').classList.remove('active');
+        }
+
+        // Close modal on outside click
+        document.getElementById('demoModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'demoModal') closeDemoModal();
+        });
+
+        async function loadDemoDataset(demoId) {
+            closeDemoModal();
+            
+            // Show loading
+            const demoInfo = demoDatasets.find(d => d.id === demoId);
+            addBotMessage(`Loading demo: <b>${demoInfo.name}</b>...`);
+            
+            try {
+                const res = await fetch(`${API_URL}/api/load-demo`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ demo_id: demoId })
+                });
+                
+                if (!res.ok) {
+                    throw new Error(`Failed to load demo: ${res.status}`);
+                }
+                
+                const data = await res.json();
+                console.log('Demo loaded:', data);
+                
+                // Store in cache
+                fileCache[data.file_id] = data;
+                
+                // Add to file list with demo indicator
+                addFileToList(data.file_id, `✨ ${data.filename}`, true);
+                
+                // Switch to demo file
+                switchFile(data.file_id);
+                
+                // Remove loading and show success
+                const chat = document.getElementById('chatContainer');
+                if (chat.lastElementChild && chat.lastElementChild.textContent.includes('Loading demo')) {
+                    chat.lastElementChild.remove();
+                }
+                
+                addBotMessage(`
+                    <b>✨ Demo Ready!</b><br>
+                    <span style="font-size: 13px;">${data.demo_info.description}</span><br><br>
+                    <b>Try asking:</b><br>
+                    ${data.demo_info.use_cases.map(uc => `• ${uc}`).join('<br>')}
+                `);
+                
+            } catch (err) {
+                console.error('Demo load error:', err);
+                addBotMessage('❌ Failed to load demo dataset: ' + err.message);
+            }
+        }
 
         // --- File Upload Logic ---
         const fileInput = document.getElementById('fileInput');
@@ -365,13 +922,16 @@
             }
         }
 
-        function addFileToList(id, name) {
+        function addFileToList(id, name, isDemo = false) {
             const fileList = document.getElementById('fileList');
             const div = document.createElement('div');
             div.className = 'file-item';
             div.id = `file-${id}`;
             div.onclick = () => switchFile(id);
             div.innerHTML = `<div class="file-name" title="${name}">${name}</div>`;
+            if (isDemo) {
+                div.style.borderColor = 'var(--accent)';
+            }
             fileList.appendChild(div);
         }
 
@@ -427,6 +987,7 @@
                     body: JSON.stringify({
                         file_id: currentFileId,
                         query: text,
+                        session_id: sessionId,
                         provider: provider,
                         model: model
                     })
@@ -436,6 +997,11 @@
 
                 // Remove loading message
                 document.getElementById(loadingMsgId).remove();
+
+                // Update context indicator
+                if (data.message_count) {
+                    updateContextIndicator(data.message_count);
+                }
 
                 if (data.success) {
                     if (data.type === 'image_response' || data.type === 'chart_response') {
