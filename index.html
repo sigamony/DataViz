@@ -10,19 +10,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #818CF8;
-            --primary-hover: #6366F1;
-            --primary-light: #312E81;
-            --accent: #A78BFA;
-            --bg: #0F172A;
-            --card-bg: #1E293B;
-            --text-main: #F1F5F9;
-            --text-secondary: #CBD5E1;
-            --text-muted: #94A3B8;
-            --border: #334155;
-            --success: #34D399;
-            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+            --primary: #22c55e;
+            --primary-hover: #16a34a;
+            --primary-light: rgba(34, 197, 94, 0.1);
+            --accent: #4ade80;
+            --bg: #000000;
+            --card-bg: rgba(10, 10, 10, 0.7);
+            --text-main: #ffffff;
+            --text-secondary: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #14532d;
+            --success: #22c55e;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6);
         }
 
         * {
@@ -31,7 +31,9 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: var(--bg);
+            background: linear-gradient(-45deg, #000000, #022c22, #000000, #064e3b);
+            background-size: 400% 400%;
+            animation: liquid 15s ease infinite;
             color: var(--text-main);
             margin: 0;
             display: flex;
@@ -42,10 +44,26 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
+        @keyframes liquid {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
         /* Sidebar */
         .sidebar {
             width: 300px;
             background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid var(--border);
             padding: 24px;
             display: flex;
@@ -66,10 +84,7 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .brand::before {
-            content: '📊';
-            font-size: 24px;
-        }
+
 
         .upload-area {
             border: 1.5px dashed var(--border);
@@ -78,7 +93,8 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
-            background: var(--bg);
+            background: var(--card-bg);
+            backdrop-filter: blur(4px);
         }
 
         .upload-area:hover {
@@ -112,7 +128,7 @@
             padding: 32px;
             gap: 24px;
             overflow-y: auto;
-            background: var(--bg);
+            background: transparent;
         }
 
         .chat-container {
@@ -133,8 +149,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.user {
@@ -426,8 +449,15 @@
         }
 
         @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .modal-header {
@@ -663,9 +693,9 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="brand">DataViz</div>
+        <div class="brand">Visualize AI</div>
 
-        <button class="demo-btn" onclick="openDemoModal()">✨ Try Demo Datasets</button>
+        <button class="demo-btn" onclick="openDemoModal()">Try Demo Datasets</button>
 
         <div>
             <div class="section-label">AI Model</div>
@@ -692,12 +722,14 @@
 
         <div id="fileInfo" class="file-info" style="display: none;">
             <div class="section-label" style="margin-bottom: 8px;">Active File</div>
-            <div id="fileName" style="margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;"></div>
+            <div id="fileName" style="margin-bottom: 8px; color: var(--primary); font-weight: 600; font-size: 14px;">
+            </div>
             <div class="profile-bg">
                 <div>Rows: <span id="rowCount">-</span></div>
                 <div>Cols: <span id="colCount">-</span></div>
             </div>
-            <div style="margin-top: 12px; font-size: 12px; color: var(--text-muted); max-height: 80px; overflow-y: auto;">
+            <div
+                style="margin-top: 12px; font-size: 12px; color: var(--text-muted); max-height: 80px; overflow-y: auto;">
                 <strong>Columns:</strong> <span id="colList"></span>
             </div>
         </div>
@@ -723,14 +755,13 @@
                     👋 Welcome! Upload a dataset to begin analyzing your data.
                 </div>
             </div>
-            
+
             <!-- Suggestions will be inserted here -->
             <div id="suggestionsWrapper"></div>
         </div>
 
         <div class="input-area">
-            <input type="text" id="userInput" class="input-box" placeholder="Ask about your data..."
-                disabled>
+            <input type="text" id="userInput" class="input-box" placeholder="Ask about your data..." disabled>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
         </div>
     </div>
@@ -766,7 +797,7 @@
         async function initializeSession() {
             // Check if session exists in localStorage
             const storedSessionId = localStorage.getItem('dataviz_session_id');
-            
+
             if (storedSessionId) {
                 // Try to retrieve existing session
                 try {
@@ -783,14 +814,14 @@
                     console.log('Failed to restore session:', err);
                 }
             }
-            
+
             // Create new session
             try {
                 const res = await fetch(`${API_URL}/api/session/create`, {
                     method: 'POST'
                 });
                 const data = await res.json();
-                
+
                 if (data.success) {
                     sessionId = data.session_id;
                     userProfile = data.user_profile;
@@ -807,18 +838,18 @@
             const profileEl = document.getElementById('userProfile');
             const avatarEl = document.getElementById('userAvatar');
             const nameEl = document.getElementById('userName');
-            
+
             avatarEl.style.background = avatarStyle;
             avatarEl.textContent = profile.avatar.emoji;
             nameEl.textContent = profile.username;
-            
+
             profileEl.style.display = 'flex';
         }
 
         function updateContextIndicator(count) {
             const indicator = document.getElementById('contextIndicator');
             const countEl = document.getElementById('contextCount');
-            
+
             if (count > 0) {
                 countEl.textContent = count;
                 indicator.classList.add('show');
@@ -829,12 +860,12 @@
         // --- Suggestions Functions ---
         function displaySuggestions(suggestions) {
             const wrapper = document.getElementById('suggestionsWrapper');
-            
+
             if (!suggestions || suggestions.length === 0) {
                 wrapper.innerHTML = '';
                 return;
             }
-            
+
             const html = `
                 <div class="suggestions-container">
                     <div style="width: 100%;">
@@ -849,7 +880,7 @@
                     `).join('')}
                 </div>
             `;
-            
+
             wrapper.innerHTML = html;
         }
 
@@ -879,7 +910,7 @@
         function openDemoModal() {
             const modal = document.getElementById('demoModal');
             const listContainer = document.getElementById('demoDatasetList');
-            
+
             // Render demo datasets
             listContainer.innerHTML = demoDatasets.map(dataset => `
                 <div class="demo-card" onclick="loadDemoDataset('${dataset.id}')">
@@ -902,7 +933,7 @@
                     </div>
                 </div>
             `).join('');
-            
+
             modal.classList.add('active');
         }
 
@@ -917,51 +948,51 @@
 
         async function loadDemoDataset(demoId) {
             closeDemoModal();
-            
+
             // Show loading
             const demoInfo = demoDatasets.find(d => d.id === demoId);
             addBotMessage(`Loading demo: <b>${demoInfo.name}</b>...`);
-            
+
             try {
                 const res = await fetch(`${API_URL}/api/load-demo`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ demo_id: demoId })
                 });
-                
+
                 if (!res.ok) {
                     throw new Error(`Failed to load demo: ${res.status}`);
                 }
-                
+
                 const data = await res.json();
                 console.log('Demo loaded:', data);
-                
+
                 // Store in cache
                 fileCache[data.file_id] = data;
-                
+
                 // Add to file list with demo indicator
                 addFileToList(data.file_id, `✨ ${data.filename}`, true);
-                
+
                 // Switch to demo file
                 switchFile(data.file_id);
-                
+
                 // Remove loading and show success
                 const chat = document.getElementById('chatContainer');
                 if (chat.lastElementChild && chat.lastElementChild.textContent.includes('Loading demo')) {
                     chat.lastElementChild.remove();
                 }
-                
+
                 // Display suggestions
                 if (data.suggestions) {
                     displaySuggestions(data.suggestions);
                 }
-                
+
                 addBotMessage(`
                     <b>✨ Demo Ready!</b><br>
                     <span style="font-size: 13px;">${data.demo_info.description}</span><br><br>
                     <b>Try the suggestions above or ask your own questions!</b>
                 `);
-                
+
             } catch (err) {
                 console.error('Demo load error:', err);
                 addBotMessage('❌ Failed to load demo dataset: ' + err.message);
@@ -1195,7 +1226,7 @@
                 ia[i] = byteString.charCodeAt(i);
             }
             const blob = new Blob([ab], { type: 'image/png' });
-            
+
             // Create download link
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');

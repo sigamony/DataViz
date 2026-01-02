@@ -3,7 +3,7 @@
 venv/
 *.db
 
-data/
+uploads/
 
 __pycache__
 
