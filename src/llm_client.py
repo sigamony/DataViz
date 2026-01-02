@@ -7,7 +7,7 @@ load_dotenv()
 
 # Configure API keys
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-HF_TOKEN = os.environ.get("HF_TOKEN")
+HF_TOKEN = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_API_KEY")
 
 def get_gemini_client():
     if not GEMINI_API_KEY:
@@ -28,7 +28,7 @@ def call_llm(prompt, provider="gemini", model="gemini-2.5-flash-lite"):
     
     Args:
         prompt (str): The prompt text.
-        provider (str): 'gemini' or 'huggingface'.
+        provider (str): 'gemini', 'huggingface', or 'gpt-oss'.
         model (str): The model ID to use.
         
     Returns:
@@ -37,7 +37,6 @@ def call_llm(prompt, provider="gemini", model="gemini-2.5-flash-lite"):
     try:
         if provider == "gemini":
             client = get_gemini_client()
-            # If user asks for gemini types, map to valid google genai model names if needed
             response = client.models.generate_content(
                 model=model,
                 contents=prompt
@@ -46,12 +45,22 @@ def call_llm(prompt, provider="gemini", model="gemini-2.5-flash-lite"):
 
         elif provider == "huggingface":
             client = get_hf_client()
-            # The error indicated 'conversational' task is supported.
-            # We use chat_completion which maps to the standard chat API.
             response = client.chat_completion(
                 messages=[{"role": "user", "content": prompt}],
                 model=model,
-                max_tokens=2048, # Note: param is max_tokens in chat API, max_new_tokens in text_generation
+                max_tokens=2048,
+                temperature=0.1
+            )
+            return response.choices[0].message.content
+        
+        elif provider == "gpt-oss":
+            if not HF_TOKEN:
+                raise ValueError("HF_TOKEN environment variable not set.")
+            client = InferenceClient(api_key=HF_TOKEN)
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=2048,
                 temperature=0.1
             )
             return response.choices[0].message.content

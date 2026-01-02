@@ -172,6 +172,7 @@
             border: 1px solid var(--border);
             display: inline-block;
             box-shadow: var(--shadow-sm);
+            position: relative;
         }
 
         .chart-container img {
@@ -179,6 +180,31 @@
             height: auto;
             border-radius: 6px;
             display: block;
+        }
+
+        .download-btn {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-md);
+        }
+
+        .download-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(129, 140, 248, 0.4);
         }
 
         /* Input Area */
@@ -579,6 +605,57 @@
             display: block;
             animation: fadeIn 0.3s ease;
         }
+
+        /* Suggestion Pills */
+        .suggestions-container {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .suggestion-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .suggestion-pill:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(129, 140, 248, 0.2);
+        }
+
+        .suggestion-icon {
+            font-size: 16px;
+        }
+
+        .suggestion-text {
+            font-weight: 500;
+        }
+
+        .suggestions-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 
@@ -594,6 +671,7 @@
             <div class="section-label">AI Model</div>
             <select id="modelSelect">
                 <option value="gemini:gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                <option value="gpt-oss:openai/gpt-oss-120b:groq">GPT-OSS 120B (Groq)</option>
                 <option value="huggingface:meta-llama/Llama-3.1-8B-Instruct">Llama 3.1 8B</option>
             </select>
         </div>
@@ -645,6 +723,9 @@
                     👋 Welcome! Upload a dataset to begin analyzing your data.
                 </div>
             </div>
+            
+            <!-- Suggestions will be inserted here -->
+            <div id="suggestionsWrapper"></div>
         </div>
 
         <div class="input-area">
@@ -745,6 +826,42 @@
             }
         }
 
+        // --- Suggestions Functions ---
+        function displaySuggestions(suggestions) {
+            const wrapper = document.getElementById('suggestionsWrapper');
+            
+            if (!suggestions || suggestions.length === 0) {
+                wrapper.innerHTML = '';
+                return;
+            }
+            
+            const html = `
+                <div class="suggestions-container">
+                    <div style="width: 100%;">
+                        <div class="suggestions-label">✨ Suggested Visualizations</div>
+                    </div>
+                    ${suggestions.map(s => `
+                        <div class="suggestion-pill" onclick="applySuggestion('${s.query.replace(/'/g, "\\'")}')"
+                             title="${s.description}">
+                            <span class="suggestion-icon">${s.icon}</span>
+                            <span class="suggestion-text">${s.query}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            wrapper.innerHTML = html;
+        }
+
+        function applySuggestion(query) {
+            // Set the query in input box
+            document.getElementById('userInput').value = query;
+            // Auto-send the message
+            sendMessage();
+            // Clear suggestions after use
+            document.getElementById('suggestionsWrapper').innerHTML = '';
+        }
+
         // --- Demo Mode Functions ---
         async function loadDemoDatasets() {
             try {
@@ -834,11 +951,15 @@
                     chat.lastElementChild.remove();
                 }
                 
+                // Display suggestions
+                if (data.suggestions) {
+                    displaySuggestions(data.suggestions);
+                }
+                
                 addBotMessage(`
                     <b>✨ Demo Ready!</b><br>
                     <span style="font-size: 13px;">${data.demo_info.description}</span><br><br>
-                    <b>Try asking:</b><br>
-                    ${data.demo_info.use_cases.map(uc => `• ${uc}`).join('<br>')}
+                    <b>Try the suggestions above or ask your own questions!</b>
                 `);
                 
             } catch (err) {
@@ -914,7 +1035,12 @@
                     chat.lastElementChild.remove();
                 }
 
-                addBotMessage(`Ready! Metadata loaded for <b>${data.filename}</b>. (${data.profile.row_count} rows)`);
+                // Display suggestions
+                if (data.suggestions) {
+                    displaySuggestions(data.suggestions);
+                }
+
+                addBotMessage(`Ready! Metadata loaded for <b>${data.filename}</b>. (${data.profile.row_count} rows)<br><br>Try the suggested visualizations above!`);
 
             } catch (err) {
                 console.error("Upload Error:", err);
@@ -1005,7 +1131,15 @@
 
                 if (data.success) {
                     if (data.type === 'image_response' || data.type === 'chart_response') {
-                        const imgHtml = `<div class="chart-container"><img src="data:image/png;base64,${data.image}" alt="Chart"></div>`;
+                        const chartId = 'chart-' + Date.now();
+                        const imgHtml = `
+                            <div class="chart-container" id="${chartId}">
+                                <button class="download-btn" onclick="downloadChart('${data.image}', 'dataviz-chart-${Date.now()}.png')">
+                                    ⬇️ Download
+                                </button>
+                                <img src="data:image/png;base64,${data.image}" alt="Chart">
+                            </div>
+                        `;
                         addBotMessage(data.message + imgHtml);
                     } else {
                         addBotMessage(data.message);
@@ -1049,6 +1183,28 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // --- Download Chart Function ---
+        function downloadChart(base64Image, filename = 'chart.png') {
+            // Convert base64 to blob
+            const byteString = atob(base64Image);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: 'image/png' });
+            
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>

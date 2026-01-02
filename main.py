@@ -19,6 +19,7 @@ from src.session_manager import (
     get_conversation_history, cleanup_expired_sessions, get_message_count, clear_conversation
 )
 from src.user_profile import generate_user_profile, get_avatar_style
+from src.suggestions import generate_suggestions
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -150,6 +151,9 @@ async def load_demo_dataset(demo_id: str = Body(..., embed=True)):
         demo_info = next((d for d in get_demo_datasets() if d['id'] == demo_id), None)
         filename = demo_info['name'] if demo_info else demo_id
         
+        # Generate visualization suggestions
+        suggestions = generate_suggestions(profile)
+        
         # Save to database (using demo path)
         save_file_metadata(file_id, filename, demo_path, profile)
         
@@ -161,6 +165,7 @@ async def load_demo_dataset(demo_id: str = Body(..., embed=True)):
             "profile": profile,
             "is_demo": True,
             "demo_info": demo_info,
+            "suggestions": suggestions,
             "message": "Demo dataset loaded successfully."
         }
         
@@ -198,10 +203,15 @@ async def upload_file(file: UploadFile = File(...)):
         save_file_metadata(file_id, file.filename, save_path, profile)
         logger.info("Metadata saved to DB.")
         
+        # Generate visualization suggestions
+        suggestions = generate_suggestions(profile)
+        logger.info(f"Generated {len(suggestions)} suggestions")
+        
         return {
             "file_id": file_id,
             "filename": file.filename,
             "profile": profile,
+            "suggestions": suggestions,
             "message": "File uploaded and processed successfully."
         }
         
