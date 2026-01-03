@@ -129,7 +129,7 @@ def list_demo_datasets():
     }
 
 @app.post("/api/load-demo")
-async def load_demo_dataset(demo_id: str = Body(..., embed=True)):
+def load_demo_dataset(demo_id: str = Body(..., embed=True)):
     """
     Loads a demo dataset and returns its profile (similar to upload).
     """
@@ -174,7 +174,7 @@ async def load_demo_dataset(demo_id: str = Body(..., embed=True)):
         raise HTTPException(status_code=500, detail=f"Failed to load demo: {str(e)}")
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+def upload_file(file: UploadFile = File(...)):
     """
     Uploads a CSV/Excel file, saves it, and returns a profile.
     """
@@ -220,7 +220,7 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @app.post("/generate")
-async def generate_chart(request: QueryRequest):
+def generate_chart(request: QueryRequest):
     """
     Generates a chart based on the user query and file ID.
     Now supports conversation memory.

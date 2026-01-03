@@ -30,7 +30,10 @@ def get_db():
         client = get_db_client()
         # Parse database name from URI or default to 'chart_visualizer'
         # Default pymongo behavior uses the db in URI if present
-        _db = client.get_database() 
+        try:
+            _db = client.get_database()
+        except pymongo.errors.ConfigurationError:
+            _db = client.get_database("chart_visualizer") 
     return _db
 
 def init_db():

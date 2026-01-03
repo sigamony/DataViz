@@ -73,7 +73,7 @@ def generate_finance_data():
     """Generate realistic financial dataset."""
     np.random.seed(44)
     
-    months = pd.date_range(start='2020-01-01', end='2024-12-31', freq='M')
+    months = pd.date_range(start='2020-01-01', end='2024-12-31', freq='ME')
     departments = ['Sales', 'Marketing', 'Operations', 'IT', 'HR', 'Finance']
     
     data = []
