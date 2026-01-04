@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 import shutil
 import os
 import uuid
@@ -72,6 +73,11 @@ from fastapi.responses import FileResponse
 @app.get("/")
 def read_root():
     return FileResponse('index.html')
+
+@app.get("/health")
+def health_check():
+    """Lightweight health check endpoint for cron job pings."""
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
 @app.post("/api/session/create")
 def create_user_session():
